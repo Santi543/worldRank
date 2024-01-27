@@ -1,14 +1,15 @@
 import styled from '@emotion/styled'
 import { Box, Typography } from '@mui/material'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import down from "../imgs/Expand_down.svg"
-import search from "../imgs/Search.svg"
+import data from "../data/countries"
+import CountriesContainer from './CountriesContainer'
 
 const BoxContainer = styled(Box)`
     display: flex;
     flex-direction: column;
     position: absolute;
-    top: 552px;
+    top: 630px;
     left: 0;
     right: 0;
     bottom: 0;
@@ -53,7 +54,7 @@ const ButtonSubmit = styled.button`
   margin: 0;
   border: 1px solid transparent;
   border-radius: inherit;
-  background: transparent url("../imgs/Search.svg") no-repeat 13px;
+  background: transparent url("./Search.svg") no-repeat center;
   cursor: pointer;
   opacity: 0.7;
 `
@@ -62,12 +63,12 @@ const SearchBy = styled.input`
   border: none;
   background: #282B30;
   margin: 0;
-  padding: 7px 8px;
+  padding: 7px 0px;
   font-size: 14px;
   color: #6C727F;
   border: 1px solid transparent;
   border-radius: inherit;
-  width: 300px;
+  width: 312px;
   outline: none;
   font-weight: 600;
   ::placeholder{
@@ -78,8 +79,9 @@ const SearchBy = styled.input`
 const BoxRowCenter = styled(Box)`
     display: flex;
     flex-direction: row;
-    align-items: center;
+    align-items: flex-start;
     justify-content: flex-start;
+    gap: 35px;
 `
 
 const SortByBox = styled(Box)`
@@ -98,7 +100,6 @@ const InputBox = styled(Box)`
     border-radius: 10px;
     border: 1px solid #282B30;
     padding: 10px;
-    
 `
 
 const SortByTypography = styled(Typography)`
@@ -173,7 +174,8 @@ const CheckBox = styled(Box)`
     height: 20px;
     margin-right: 5px;
     background-color: ${props => props.checked ? "#4E80EE" : false};
-    background-image: ${props => props.checked ? 'url("../imgs/Done_round.svg")' : false};
+    background-image: ${props => props.checked ? 'url("./Done_round.svg")' : false};
+    cursor: pointer;
 `
 
 const TitleCheckBox = styled(Typography)`
@@ -183,43 +185,91 @@ const TitleCheckBox = styled(Typography)`
     font-family: 'Be Vietnam Pro', sans-serif;
 `
 
-const Container = () => {
-    const [search, setSearch] = useState("")
-    const [region, setRegion] = useState({
-        americas: false,
-        antarctic: false,
-        africa: false,
-        asia: false,
-        europa: false,
-        oceania: false,
-    })
+const PropertiesOfCountries = styled(Box)`
+    display: grid;
+    grid-template-columns: 100px 270px 245px 203px 90px;
+    align-items: center;
+    justify-items: flex-start;
+    gap: 60px;
+    border-bottom: 1px solid #282B30;
+    padding: 15px 0px 15px 0px;
+`
 
+const ContainerColumnProperties = styled(Box)`
+    display: flex;
+    flex-direction: column;
+`
+
+const Container = () => {
+    const [countries, setCountries] = useState([])
+    const [filteredOut, setFilteredOut] = useState([])
+    const [countriesFound, setCountriesFound] = useState(250)
+    const [search, setSearch] = useState("")
+    const [region, setRegion] = useState([])
+    const [regionModeActive, setRegionModeActive] = useState(false)
     const [status, setStatus] = useState({
         checkbox1: false,
         checkbox2: false
     })
 
-    const handleCheckBoxChange = (checkboxName) =>{
+    const handleCheckBoxChange = (checkboxName) => {
+        setRegionModeActive(true)
         setStatus({
             ...status,
             [checkboxName]: !status[checkboxName]
         })
+        if((status.checkbox1) === true){
+            
+            let array = [];
+            array = countries.filter((properties) => properties.unMember === true)
+            setFilteredOut([...filteredOut, ...array])
+         } else{
+            setFilteredOut(countries.filter((properties) => properties.unMember !== true))
+         }
     }
 
-    const handleRegionChange = (regionName) =>{
-        setRegion({
-            ...region,
-            [regionName]: !region[regionName]
-        })
+    console.log(filteredOut)
+    console.log(regionModeActive)
+
+    /* useEffect(() =>{
+        
+    }, [status]) */
+
+    console.log(status.checkbox1)
+
+    const handleRegionChange = (regionName) => {
+        setRegionModeActive(true)
+         if (region.find((obj) => obj === regionName)) {
+            setRegion(region.filter((obj) => obj !== regionName))
+            setFilteredOut(filteredOut.filter((country) => country.region !== regionName))
+        } else {
+            setRegion([...region, regionName])
+            let arrayNew = countries.filter(country => country.region === regionName)
+            setFilteredOut(([...filteredOut, ...arrayNew]))
+        }
     }
+
+    useEffect(() =>{
+        setCountriesFound(filteredOut.length)
+    }, [region, status])
+
+    useEffect(() =>{
+        setCountriesFound(countries.length)
+    }, [countries])
+
+    useEffect(() => {
+        data
+            .then(res => res.clone().json())
+            .then(res => setCountries(res))
+    }, [])
 
     return (
         <BoxContainer>
             <BoxRowTop>
-                <CountriesFound>Found 234 countries</CountriesFound>
+                <CountriesFound>Found {countriesFound} countries</CountriesFound>
                 <Form>
-                    <ButtonSubmit type='submit'/>
-                    <SearchBy type='search' placeholder=" Search by Name, Region or Subregion" onChange={() => search}/>
+                    <ButtonSubmit type='submit' />
+                    <SearchBy type='search' placeholder=" Search by Name, Region or Subregion" onChange={() => search} />
                 </Form>
             </BoxRowTop>
             <BoxRowCenter>
@@ -235,29 +285,40 @@ const Container = () => {
                         <SortByTypography>Region</SortByTypography>
                         <BoxGridRegions>
                             <BoxRowRegions>
-                                <Regions region={region.americas} onClick={() => handleRegionChange("americas")} continent={region.continent}>Americas</Regions>
-                                <Regions region={region.antarctic} onClick={() => handleRegionChange("antarctic")}>Antarctic</Regions>
+                                <Regions region={region.find((obj) => obj === "Americas")} onClick={() => handleRegionChange("Americas")} continent={region.continent}>Americas</Regions>
+                                <Regions region={region.find((obj) => obj === "Antarctic")} onClick={() => handleRegionChange("Antarctic")}>Antarctic</Regions>
                             </BoxRowRegions>
                             <BoxRowRegions>
-                                <Regions region={region.africa} onClick={() => handleRegionChange("africa")}>Africa</Regions>
-                                <Regions region={region.asia} onClick={() => handleRegionChange("asia")}>Asia</Regions>
-                                <Regions region={region.europa} onClick={() => handleRegionChange("europa")}>Europa</Regions>
+                                <Regions region={region.find((obj) => obj === "Africa")} onClick={() => handleRegionChange("Africa")}>Africa</Regions>
+                                <Regions region={region.find((obj) => obj === "Asia")} onClick={() => handleRegionChange("Asia")}>Asia</Regions>
+                                <Regions region={region.find((obj) => obj === "Europe")} onClick={() => handleRegionChange("Europe")}>Europa</Regions>
                             </BoxRowRegions>
-                            <Regions region={region.oceania} onClick={() => handleRegionChange("oceania")}>Oceania</Regions>
+                            <Regions region={region.find((obj) => obj === "Oceania")} onClick={() => handleRegionChange("Oceania")}>Oceania</Regions>
                         </BoxGridRegions>
                     </ContainerRegion>
                     <BoxStatus>
                         <SortByTypography>Status</SortByTypography>
                         <BoxRowRegions>
-                            <CheckBox checked={status.checkbox1} onClick={() => handleCheckBoxChange('checkbox1')}/>
+                            <CheckBox checked={status.checkbox1} onClick={() => handleCheckBoxChange('checkbox1')} />
                             <TitleCheckBox>Member of the United Nations</TitleCheckBox>
                         </BoxRowRegions>
                         <BoxRowRegions>
-                            <CheckBox checked={status.checkbox2} onClick={() => handleCheckBoxChange('checkbox2')}/>
+                            <CheckBox checked={status.checkbox2} onClick={() => handleCheckBoxChange('checkbox2')} />
                             <TitleCheckBox>Independent</TitleCheckBox>
                         </BoxRowRegions>
                     </BoxStatus>
                 </BoxColumnLeft>
+                <ContainerColumnProperties>
+                    <PropertiesOfCountries>
+                        <SortByTypography >Flag</SortByTypography>
+                        <SortByTypography >Name</SortByTypography>
+                        <SortByTypography >Population</SortByTypography>
+                        <SortByTypography sx={{ width: "70px" }}>Area (km)</SortByTypography>
+                        <SortByTypography >Region</SortByTypography>
+                    </PropertiesOfCountries>
+                    <CountriesContainer countries={regionModeActive ? filteredOut : countries} region={region} />
+                </ContainerColumnProperties>
+
             </BoxRowCenter>
         </BoxContainer>
     )
