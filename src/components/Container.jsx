@@ -1,5 +1,5 @@
 import styled from '@emotion/styled'
-import { Box, Typography } from '@mui/material'
+import { Box, Typography, checkboxClasses } from '@mui/material'
 import React, { useEffect, useState } from 'react'
 import down from "../imgs/Expand_down.svg"
 import data from "../data/countries"
@@ -90,6 +90,7 @@ const SortByBox = styled(Box)`
     align-items: flex-start;
     gap: 5px;
     margin-bottom: 40px;
+    position: relative;
 `
 
 const InputBox = styled(Box)`
@@ -200,61 +201,143 @@ const ContainerColumnProperties = styled(Box)`
     flex-direction: column;
 `
 
+const SortByListBox = styled(Box)`
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    position: absolute;
+    top: 65px;
+    left: 0px;
+    padding: 10px;
+    z-index: 200;
+    background-color: #1B1D1F;
+    border: 1px solid #282B30;
+    border-radius: 10px;
+    gap: 15px;
+    width: 100px;
+`
+
+const BoxForSortBy = styled(Box)`
+    display: flex;
+    cursor: pointer;
+    border-bottom: 1px solid #282B30;
+    width: 100%;
+`
+
 const Container = () => {
     const [countries, setCountries] = useState([])
     const [filteredOut, setFilteredOut] = useState([])
-    const [countriesFound, setCountriesFound] = useState(250)
+    const [twoFilters, setTwoFilters] = useState([])
+    const [checkBox, setCheckBox] = useState("")
+    const [nameForRegion, setNameForRegion] = useState("")
+    const [countriesFound, setCountriesFound] = useState(0)
     const [search, setSearch] = useState("")
     const [region, setRegion] = useState([])
-    const [regionModeActive, setRegionModeActive] = useState(false)
-    const [status, setStatus] = useState({
-        checkbox1: false,
-        checkbox2: false
-    })
+    const [filteredOutActive, setFilteredOutActive] = useState(false)
+    const [status, setStatus] = useState([])
+    const [twoActive, setTwoActive] = useState(0)
+    const [sortByActive, setSortByActive] = useState(0)
+    const [sortingBy, setSortingBy] = useState("Population")
 
     const handleCheckBoxChange = (checkboxName) => {
-        setRegionModeActive(true)
-        setStatus({
-            ...status,
-            [checkboxName]: !status[checkboxName]
-        })
-        if((status.checkbox1) === true){
-            
-            let array = [];
-            array = countries.filter((properties) => properties.unMember === true)
-            setFilteredOut([...filteredOut, ...array])
-         } else{
-            setFilteredOut(countries.filter((properties) => properties.unMember !== true))
-         }
-    }
-
-    console.log(filteredOut)
-    console.log(regionModeActive)
-
-    /* useEffect(() =>{
-        
-    }, [status]) */
-
-    console.log(status.checkbox1)
-
-    const handleRegionChange = (regionName) => {
-        setRegionModeActive(true)
-         if (region.find((obj) => obj === regionName)) {
-            setRegion(region.filter((obj) => obj !== regionName))
-            setFilteredOut(filteredOut.filter((country) => country.region !== regionName))
+        setCheckBox(checkboxName)
+        if (status.find((prop) => prop === checkboxName)) {
+            setCheckBox(null)
+            setStatus(status.filter((prop) => prop !== checkboxName))
         } else {
-            setRegion([...region, regionName])
-            let arrayNew = countries.filter(country => country.region === regionName)
-            setFilteredOut(([...filteredOut, ...arrayNew]))
+            setStatus([...status, checkboxName]);
         }
     }
 
-    useEffect(() =>{
-        setCountriesFound(filteredOut.length)
-    }, [region, status])
+    const handleRegionChange = (regionName) => {
+        setNameForRegion(regionName)
+        if (region.find((prop) => prop === regionName)) {
+            setRegion(region.filter((prop) => prop !== regionName))
+        } else {
+            setRegion([...region, regionName])
+        }
+    }
 
-    useEffect(() =>{
-        setCountriesFound(countries.length)
+    useEffect(() => {
+        if (status.length === 2) {
+            return setFilteredOut((prev) => prev.filter((properties) => properties[checkBox] === true))
+        }
+        if (status.includes(checkBox)) {
+            if (region.length > 0) {
+                if (twoFilters.length > 0) {
+                    if (!region.includes(nameForRegion)) {
+                        let array = twoFilters.filter((properties) => properties.region !== nameForRegion)
+                        return setTwoFilters([...array])
+                    }
+                    let array = countries.filter((properties) => properties[checkBox] === true && properties.region === nameForRegion)
+                    return setTwoFilters([...twoFilters, ...array])
+                } else {
+                    if (filteredOut.length === 193 || filteredOut.length === 194) {
+                        let array = filteredOut.filter((properties) => properties.region === nameForRegion)
+                        return setTwoFilters([...twoFilters, ...array])
+                    } else {
+                        let array = filteredOut.filter((properties) => properties[checkBox] === true)
+                        return setTwoFilters([...twoFilters, ...array])
+                    }
+                }
+            }
+            let array = countries.filter((properties) => properties[checkBox] === true)
+            return setFilteredOut([...array])
+        } else {
+            if (status.find((prop) => prop === "unMember" || prop === "independent")) {
+                let array = filteredOut.filter((properties) => properties[status[0]] === true)
+                return setFilteredOut([...array])
+            }
+            if (region.length === 0) {
+                let array = filteredOut.filter((properties) => properties[checkBox] === false)
+                return setFilteredOut([...array])
+            }
+            if (region.length > 0) {
+                let newArray = [];
+                for (let index = 0; index < region.length; index++) {
+                    let array = countries.filter((properties) => properties.region === region[index])
+                    newArray.push(...array);
+                }
+                return setFilteredOut(newArray)
+            }
+        } if (!region.includes(nameForRegion)) {
+            let array = filteredOut.filter((properties) => properties.region !== nameForRegion)
+            return setFilteredOut([...array])
+        }
+    }, [checkBox, nameForRegion, status, region])
+
+    /* console.log(twoFilters, "twoFilters")
+   console.log(filteredOut, "filteredOut")  */
+
+    useEffect(() => {
+        if (status.length === 0 && region.length === 0) {
+            setFilteredOut([])
+        }
+    }, [status])
+
+    useEffect(() => {
+        if (status.length > 0 || region.length > 0) {
+            setFilteredOutActive(true)
+        } else {
+            setFilteredOutActive(false)
+        }
+    }, [status, region])
+
+    useEffect(() => {
+        if (status.length > 0 && region.length > 0) {
+            setTwoActive(1)
+        } else {
+            setTwoActive(0)
+            setTwoFilters([])
+        }
+    }, [status, region])
+
+    useEffect(() => {
+        if (countries.length === 0) {
+            data
+                .then(res => res.clone().json())
+                .then(res => setCountries(res))
+        }
     }, [countries])
 
     useEffect(() => {
@@ -262,6 +345,8 @@ const Container = () => {
             .then(res => res.clone().json())
             .then(res => setCountries(res))
     }, [])
+
+    console.log(sortingBy, "sortingBy")
 
     return (
         <BoxContainer>
@@ -276,10 +361,24 @@ const Container = () => {
                 <BoxColumnLeft>
                     <SortByBox>
                         <SortByTypography>Sort By</SortByTypography>
-                        <InputBox onClick={() => console.log("hola")}>
+                        <InputBox onClick={() => setSortByActive(!sortByActive)}>
                             <InputSelect readOnly={true} defaultValue="Population" />
                             <img src={down} />
                         </InputBox>
+                        {sortByActive ? <SortByListBox>
+                            <BoxForSortBy onClick={() => setSortingBy("Name")}>
+                                <SortByTypography >Name</SortByTypography>
+                            </BoxForSortBy>
+                            <BoxForSortBy onClick={() => setSortingBy("Population")}>
+                                <SortByTypography>Population</SortByTypography>
+                            </BoxForSortBy>
+                            <BoxForSortBy onClick={() => setSortingBy("Area")}>
+                                <SortByTypography >Area</SortByTypography>
+                            </BoxForSortBy>
+                            <BoxForSortBy onClick={() => setSortingBy("Region")}>
+                                <SortByTypography >Region</SortByTypography>
+                            </BoxForSortBy>
+                        </SortByListBox> : null}
                     </SortByBox>
                     <ContainerRegion>
                         <SortByTypography>Region</SortByTypography>
@@ -299,11 +398,11 @@ const Container = () => {
                     <BoxStatus>
                         <SortByTypography>Status</SortByTypography>
                         <BoxRowRegions>
-                            <CheckBox checked={status.checkbox1} onClick={() => handleCheckBoxChange('checkbox1')} />
+                            <CheckBox checked={status.find((obj) => obj === "unMember")} onClick={() => handleCheckBoxChange('unMember')} />
                             <TitleCheckBox>Member of the United Nations</TitleCheckBox>
                         </BoxRowRegions>
                         <BoxRowRegions>
-                            <CheckBox checked={status.checkbox2} onClick={() => handleCheckBoxChange('checkbox2')} />
+                            <CheckBox checked={status.find((obj) => obj === "independent")} onClick={() => handleCheckBoxChange("independent")} />
                             <TitleCheckBox>Independent</TitleCheckBox>
                         </BoxRowRegions>
                     </BoxStatus>
@@ -316,7 +415,10 @@ const Container = () => {
                         <SortByTypography sx={{ width: "70px" }}>Area (km)</SortByTypography>
                         <SortByTypography >Region</SortByTypography>
                     </PropertiesOfCountries>
-                    <CountriesContainer countries={regionModeActive ? filteredOut : countries} region={region} />
+                    <CountriesContainer countries={twoActive ? twoFilters : (filteredOutActive ? filteredOut : countries)}
+                        setCountriesFound={setCountriesFound}
+                        sortingBy={sortingBy}
+                    />
                 </ContainerColumnProperties>
 
             </BoxRowCenter>

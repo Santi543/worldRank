@@ -10,8 +10,39 @@ const Container = styled(Box)`
     overflow-y: scroll;
 `
 
-const CountriesContainer = ({ countries }) => {
+const CountriesContainer = ({ countries, setCountriesFound, sortingBy }) => {
+    const [countriesFiltered, setCountriesFiltered] = useState([])
+    setCountriesFound(countries.length)
+    if (sortingBy === "Name") {
+        countries.sort((a, b) => {
+            if (a.name.common < b.name.common) {
+                return -1
+            }
+        })
+    }
+    if(sortingBy === "Population"){
+        countries.sort((a, b) =>{
+            if(a.population > b.population){
+                return -1;
+            }
+        })
+    }
+    if(sortingBy === "Area"){
+        countries.sort((a, b) =>{
+            if(a.area > b.area){
+                return -1;
+            }
+        })
+    }
+    if(sortingBy === "Region"){
+        countries.sort((a, b) => {
+            if(a.region < b.region){
+                return -1;
+            }
+        })
+    }
 
+    console.log(countries)
     return (
         <Container>
             {countries.map((country) => {
