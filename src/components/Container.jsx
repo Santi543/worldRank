@@ -9,7 +9,7 @@ const BoxContainer = styled(Box)`
     display: flex;
     flex-direction: column;
     position: absolute;
-    top: 630px;
+    top: 510px;
     left: 0;
     right: 0;
     bottom: 0;
@@ -20,6 +20,13 @@ const BoxContainer = styled(Box)`
     height: 600px;
     background-color: #1B1D1F;
     border: 1px solid #282B30;
+    @media (max-width: 1350px){
+        top: 395px;
+    }
+    
+    @media (max-width: 1024px){
+        top: 230px;
+    }
 `
 
 const BoxRowTop = styled(Box)`
@@ -186,21 +193,6 @@ const TitleCheckBox = styled(Typography)`
     font-family: 'Be Vietnam Pro', sans-serif;
 `
 
-const PropertiesOfCountries = styled(Box)`
-    display: grid;
-    grid-template-columns: 100px 270px 245px 203px 90px;
-    align-items: center;
-    justify-items: flex-start;
-    gap: 60px;
-    border-bottom: 1px solid #282B30;
-    padding: 15px 0px 15px 0px;
-`
-
-const ContainerColumnProperties = styled(Box)`
-    display: flex;
-    flex-direction: column;
-`
-
 const SortByListBox = styled(Box)`
     display: flex;
     flex-direction: column;
@@ -238,6 +230,11 @@ const Container = () => {
     const [twoActive, setTwoActive] = useState(0)
     const [sortByActive, setSortByActive] = useState(0)
     const [sortingBy, setSortingBy] = useState("Population")
+
+    const searcher = (e) =>{
+        setSearch(e.target.value)
+        
+    }
 
     const handleCheckBoxChange = (checkboxName) => {
         setCheckBox(checkboxName)
@@ -346,15 +343,13 @@ const Container = () => {
             .then(res => setCountries(res))
     }, [])
 
-    console.log(sortingBy, "sortingBy")
-
     return (
         <BoxContainer>
             <BoxRowTop>
                 <CountriesFound>Found {countriesFound} countries</CountriesFound>
                 <Form>
                     <ButtonSubmit type='submit' />
-                    <SearchBy type='search' placeholder=" Search by Name, Region or Subregion" onChange={() => search} />
+                    <SearchBy type='search' placeholder="Search by Name, Region or Subregion" onChange={(e) => searcher(e)} />
                 </Form>
             </BoxRowTop>
             <BoxRowCenter>
@@ -362,7 +357,7 @@ const Container = () => {
                     <SortByBox>
                         <SortByTypography>Sort By</SortByTypography>
                         <InputBox onClick={() => setSortByActive(!sortByActive)}>
-                            <InputSelect readOnly={true} defaultValue="Population" />
+                            <InputSelect readOnly={true} value={sortingBy} />
                             <img src={down} />
                         </InputBox>
                         {sortByActive ? <SortByListBox>
@@ -407,20 +402,11 @@ const Container = () => {
                         </BoxRowRegions>
                     </BoxStatus>
                 </BoxColumnLeft>
-                <ContainerColumnProperties>
-                    <PropertiesOfCountries>
-                        <SortByTypography >Flag</SortByTypography>
-                        <SortByTypography >Name</SortByTypography>
-                        <SortByTypography >Population</SortByTypography>
-                        <SortByTypography sx={{ width: "70px" }}>Area (km)</SortByTypography>
-                        <SortByTypography >Region</SortByTypography>
-                    </PropertiesOfCountries>
                     <CountriesContainer countries={twoActive ? twoFilters : (filteredOutActive ? filteredOut : countries)}
                         setCountriesFound={setCountriesFound}
                         sortingBy={sortingBy}
+                        search={search}
                     />
-                </ContainerColumnProperties>
-
             </BoxRowCenter>
         </BoxContainer>
     )
